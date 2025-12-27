@@ -1,4 +1,4 @@
-import { getConfigData, processConfigData, getConfigDataFromAppList, processConfigDataRecursive } from './utils';
+import { getConfigData, processConfigData, getConfigDataFromAppList, processConfigDataRecursive, API_RESPONSE_COUNT } from './utils';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -150,6 +150,36 @@ describe('Utils unit tests', () => {
                     response: {
                         total_count: 1,
                         count: 0,
+                        next_cursor: 'Que'
+                    }
+                }
+            });
+
+            let config = {
+                'urls': ['datrandomurl'],
+                'app': {
+                    '1435780': {
+                        'name': 'Farm Frenzy Deluxe',
+                        'pointsShop': 'https://store.steampowered.com/points/shop/app/1435780'
+                    }
+                }
+            };
+
+            processConfigData(axios, config).then(data => {
+                expect(data).toEqual({});
+            });
+        });
+
+        test('should handle paginated response from Steam API', () => {
+            // Response data should suggest that the remaining data is found on the next page
+            axios.get = jest.fn().mockResolvedValue({
+                config: {
+                    url: 'datrandomurl?count=1000'
+                },
+                data: {
+                    response: {
+                        total_count: API_RESPONSE_COUNT + 1,
+                        count: API_RESPONSE_COUNT,
                         next_cursor: 'Que'
                     }
                 }
@@ -368,7 +398,7 @@ describe('Utils unit tests', () => {
                    "items": [
                        {
                            "cost": "3000",
-                           "imageUrl": "https://cdn.akamai.steamstatic.com/steamcommunity/public/images/items/756/bade616401392739e67eb00ff2b43750da0316ec.webm",
+                           "imageUrl": "https://shared.fastly.steamstatic.com/community_assets/images/items/756/bade616401392739e67eb00ff2b43750da0316ec.webm",
                            "itemType": "Steam Startup Movie",
                            "name": "OG Big Picture",
                            "pointsShopUrl": "https://store.steampowered.com/points/shop/app/756/cluster/9",

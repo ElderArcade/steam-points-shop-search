@@ -1,5 +1,7 @@
 import * as cheerio from 'cheerio';
 
+export const API_RESPONSE_COUNT = 1000;
+
 /** Generates configuration information to get Points Shop information from the Steam API.
  *
  * @param {string} responseData: HTML page data containing a list of apps and their ID numbers.
@@ -80,7 +82,12 @@ export function processConfigData(axiosInstance: any, config: any) {
 
             if (endpointData.total_count > endpointData.count) {
                 console.warn(`WARNING! Pagination is required to access remaining data. Got ${endpointData.total_count} total items but only retrieved ${endpointData.count}.`);
-                console.warn(`You can manually check this URL for any remaining data:\n${response.config.url}&cursor=${endpointData.next_cursor}`)
+                console.warn(`You can manually check this URL for any remaining data:\n${response.config.url}&cursor=${endpointData.next_cursor}`);
+                if (endpointData.count > 0 && endpointData.total_count > API_RESPONSE_COUNT) {
+                    console.warn("WARNING! This is likely a true positive, you should check the URL in case data was actually missed");
+                } else {
+                    console.log("This is likely a false positive, since the Steam API can pick up items from removed apps");
+                }
             }
 
             if (endpointData.definitions) {
@@ -173,9 +180,9 @@ function getImageUrl(appId: string, imageNameWithExtension: string, itemClass: n
         case 8:
         case 16:
         case 12:
-        case 17:
         case 4:
         case 3: return `https://cdn.akamai.steamstatic.com/steamcommunity/public/images/items/${appId}/${imageNameWithExtension}`;
+        case 17: return `https://shared.fastly.steamstatic.com/community_assets/images/items/${appId}/${imageNameWithExtension}`;
         case 0: return ''; // Item bundles reuse an existing image, which is not provided through the Steam API
     }
     return '';
